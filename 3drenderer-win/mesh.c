@@ -52,3 +52,55 @@ void load_cube_mesh_data(void) {
         array_push(mesh.faces, cube_face);
     }
 }
+
+void load_obj_file_data(char* filename) {
+    printf("Loading %s\n", filename);
+    FILE* file;
+    
+    errno_t err;
+
+    err = fopen_s(&file, filename, "r");
+
+    if (err != 0) {
+        printf("Error: could not open file %s. %s", filename, strerror(err));
+        
+        // return -1;
+    }
+
+    //const unsigned MAX_LENGTH = 1024;
+    char line[1024];
+
+    while (err == 0 && fgets(line, 1024, file)) {
+        // Vertex information
+        if (strncmp(line, "v ", 2) == 0) {
+            vec3_t vertex;
+            sscanf_s(line, "v %f %f %f", &vertex.x, &vertex.y, &vertex.z);
+            array_push(mesh.vertices, vertex);
+        }
+
+        // Face information
+        if (strncmp(line, "f ", 2) == 0) {
+
+            int vertex_indices[3];
+            int texture_indices[3];
+            int normal_indices[3];
+            sscanf_s(
+                line, "f %d/%d/%d %d/%d/%d %d/%d/%d",
+                &vertex_indices[0], &texture_indices[0], &normal_indices[0],
+                &vertex_indices[1], &texture_indices[1], &normal_indices[1],
+                &vertex_indices[2], &texture_indices[2], &normal_indices[2]
+            );
+
+            face_t face = {
+                .a = vertex_indices[0],
+                .b = vertex_indices[1],
+                .c = vertex_indices[2]
+            };
+
+            array_push(mesh.faces, face);
+        }
+    }
+
+    // close the file
+    fclose(file);
+}
