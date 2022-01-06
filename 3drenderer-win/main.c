@@ -7,15 +7,24 @@
 #include "vector.h"
 #include "mesh.h"
 
+//
+// Array of triangles that should be rendered frame by frame
+//
 triangle_t* triangles_to_render = NULL;
 
 vec3_t camera_position = { .x = 0, .y = 0, .z = -5 }; 
 
 float fov_factor = 640;
 
+//
+// Global variables for execution status and game loop
+//
 bool is_running = false;
 int previous_frame_time = 0;
 
+//
+// Setup function to initialise variables and game objects
+//
 void setup(void) {
     // Allocate the required memory in bytes for the color buffer
     color_buffer = (uint32_t*) malloc(sizeof(uint32_t) * window_width * window_height);
@@ -33,7 +42,9 @@ void setup(void) {
     load_obj_file_data("./assets/f22.obj");
 }
 
-
+//
+// Poll system events and handle keyboard input
+//
 void process_input(void) {
     SDL_Event event;
     SDL_PollEvent(&event);
@@ -49,7 +60,9 @@ void process_input(void) {
     }
 }
 
-
+//
+// Function that recieves a 3D vector and return a projected 2D point
+//
 vec2_t project(vec3_t point) {
     vec2_t projected_point = {
         .x = (fov_factor * point.x) / point.z,
@@ -58,7 +71,9 @@ vec2_t project(vec3_t point) {
     return projected_point;
 }
 
-
+//
+// Update function frame by frame with a fixed time step
+//
 void update(void) {
     // Wait some time until we reacg the target frame time in milliseconds
     int time_to_wait = FRAME_TARGET_TIME - (SDL_GetTicks() - previous_frame_time);
@@ -117,6 +132,9 @@ void update(void) {
 
 }
 
+//
+// Render function to draw objects on the display 
+//
 void render(void) {
 
     draw_grid();
@@ -153,13 +171,18 @@ void render(void) {
     SDL_RenderPresent(renderer);
 }
 
+//
+// Free the memory that was dynamically allocated by the program
+//
 void free_resources(void) {
     free(color_buffer);
     array_free(mesh.faces);
     array_free(mesh.vertices);
 }
 
-
+//
+// Main function
+//
 int main(int argc, char* args[]) {
     
     // Create a SDL window
