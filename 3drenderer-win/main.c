@@ -22,6 +22,7 @@ float fov_factor = 640;
 bool is_running = false;
 int previous_frame_time = 0;
 
+// Render modes
 bool is_draw_wireframe = true;
 bool is_draw_vertices = false;
 bool is_draw_filled = true;
@@ -61,16 +62,6 @@ void process_input(void) {
             break;
         case SDL_KEYDOWN:
             // Handle key strokes
-
-            /*
-            is_draw_wireframe
-            is_draw_vertices
-            is_draw_filled
-            is_back_face_culling
-            
-            */
-
-
             switch (event.key.keysym.sym) {
                 case SDLK_ESCAPE:
                     is_running = false;
@@ -108,12 +99,7 @@ void process_input(void) {
                     printf("Mode: Back-face culling %s.\n", !is_back_face_culling ? "on" : "off");
                     is_back_face_culling = !is_back_face_culling;
                     break;
-                /*case SDLK_d:
-                    printf("d key pressed.\n");
-                    break;*/
             }
-
-
             break;
     }
 }
