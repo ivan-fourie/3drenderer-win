@@ -22,6 +22,11 @@ float fov_factor = 640;
 bool is_running = false;
 int previous_frame_time = 0;
 
+bool is_draw_wireframe = true;
+bool is_draw_vertices = false;
+bool is_draw_filled = true;
+bool is_back_face_culling = true;
+
 //
 // Setup function to initialise variables and game objects
 //
@@ -39,7 +44,7 @@ void setup(void) {
     );
 
     // Loads the cube values in the mesh data structure
-    load_obj_file_data("./assets/cube.obj");
+    load_obj_file_data("./assets/f22.obj");
 
 }
 
@@ -55,8 +60,60 @@ void process_input(void) {
             is_running = false;
             break;
         case SDL_KEYDOWN:
-            if (event.key.keysym.sym == SDLK_ESCAPE)
-                is_running = false;
+            // Handle key strokes
+
+            /*
+            is_draw_wireframe
+            is_draw_vertices
+            is_draw_filled
+            is_back_face_culling
+            
+            */
+
+
+            switch (event.key.keysym.sym) {
+                case SDLK_ESCAPE:
+                    is_running = false;
+                    break;
+                case SDLK_1:
+                    // Display the wireframe and a small red dot for each triangle vertex
+                    printf("Mode: Show the wireframe and a small red dot for each triangle vertex.\n");
+                    is_draw_wireframe = true;
+                    is_draw_vertices = true;
+                    is_draw_filled = false;
+                    break;
+                case SDLK_2:
+                    // Display only the wireframe lines
+                    printf("Mode: Show only the wireframe lines.\n");
+                    is_draw_wireframe = true;
+                    is_draw_vertices = false;
+                    is_draw_filled = false;
+                    break;
+                case SDLK_3:
+                    // Display filled triangles with a solid color
+                    printf("Mode: Show filled triangles with a solid color.\n");
+                    is_draw_wireframe = false;
+                    is_draw_vertices = false;
+                    is_draw_filled = true;
+                    break;
+                case SDLK_4:
+                    // Display both filled triangles and wireframe lines
+                    printf("Mode: Show both filled triangles and wireframe lines.\n");
+                    is_draw_wireframe = true;
+                    is_draw_vertices = false;
+                    is_draw_filled = true;
+                    break;
+                case SDLK_c:
+                    // Toggle back-face culling
+                    printf("Mode: Back-face culling %s.\n", !is_back_face_culling ? "on" : "off");
+                    is_back_face_culling = !is_back_face_culling;
+                    break;
+                /*case SDLK_d:
+                    printf("d key pressed.\n");
+                    break;*/
+            }
+
+
             break;
     }
 }
@@ -121,6 +178,7 @@ void update(void) {
             transformed_vertices[j] = transformed_vertex;
         }
         
+        
         // Check backface culling
         vec3_t vector_a = transformed_vertices[0]; /*   A   */
         vec3_t vector_b = transformed_vertices[1]; /*  / \  */
@@ -139,16 +197,17 @@ void update(void) {
         // Normalize the face normal vector
         vec3_normalize(&normal);
 
+
         // Find the the vector between a point in the triangle and the camera origin
         vec3_t camera_ray = vec3_sub(camera_position, vector_a);
 
         // Calculate how aligned the camera ray is with the dot normal (using dot product)
         float dot_normal_camera = vec3_dot(normal, camera_ray);
-
-        // Bypass triangle that are looking away from the camera
-        if (dot_normal_camera < 0)
+        
+        if (is_back_face_culling && dot_normal_camera < 0)
+            // Bypass triangle that are looking away from the camera
             continue;
-
+        
         triangle_t projected_triangle;
 
         // Loop all three vertices to perform the projection
@@ -180,26 +239,32 @@ void render(void) {
     for (int i = 0; i < num_triangles; i++) {
         triangle_t triangle = triangles_to_render[i];
         
-        // Draw vertex points
-        /*draw_rect(triangle.points[0].x, triangle.points[0].y, 3, 3, 0xFFFFFF00);
-        draw_rect(triangle.points[1].x, triangle.points[1].y, 3, 3, 0xFFFFFF00);
-        draw_rect(triangle.points[2].x, triangle.points[2].y, 3, 3, 0xFFFFFF00);*/
+        if (is_draw_vertices) {
+            // Draw vertex points
+            draw_rect(triangle.points[0].x, triangle.points[0].y, 3, 3, 0xFFFF0000);
+            draw_rect(triangle.points[1].x, triangle.points[1].y, 3, 3, 0xFFFF0000);
+            draw_rect(triangle.points[2].x, triangle.points[2].y, 3, 3, 0xFFFF0000);
+        }
+        
+        if (is_draw_filled) {
+            // Draw filled triangle
+            draw_filled_triangle(
+                triangle.points[0].x, triangle.points[0].y, // vertex A
+                triangle.points[1].x, triangle.points[1].y, // vertex B
+                triangle.points[2].x, triangle.points[2].y, // vertex C
+                0xFFFFFFFF
+            );
+        }
 
-        // Draw filled triangle
-        draw_filled_triangle(
-            triangle.points[0].x, triangle.points[0].y, // vertex A
-            triangle.points[1].x, triangle.points[1].y, // vertex B
-            triangle.points[2].x, triangle.points[2].y, // vertex C
-            0xFFFFFFFF
-        );
-
-        // Draw unfilled triangle
-        draw_triangle(
-            triangle.points[0].x, triangle.points[0].y, // vertex A
-            triangle.points[1].x, triangle.points[1].y, // vertex B
-            triangle.points[2].x, triangle.points[2].y, // vertex C
-            0xFF000000
-        );
+        if (is_draw_wireframe) {
+            // Draw unfilled triangle
+            draw_triangle(
+                triangle.points[0].x, triangle.points[0].y, // vertex A
+                triangle.points[1].x, triangle.points[1].y, // vertex B
+                triangle.points[2].x, triangle.points[2].y, // vertex C
+                0xFF0000FF
+            );
+        }
     }
 
     //draw_filled_triangle(300, 100, 50, 400, 500, 700, 0xFF00FF00);
