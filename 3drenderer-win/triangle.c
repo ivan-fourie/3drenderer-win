@@ -47,8 +47,8 @@ void fill_flat_top_triangle(int x0, int y0, int x1, int y1, int x2, int y2, uint
 	}
 }
 
-//
-// Draw a filled triangle using the flat-top/flat-bottom method. 
+/*
+// Draw a filled triangle using the flat-top/flat-bottom method.
 // Split the original triangle in two, half flat-bottom and half flat-top
 //
 //
@@ -68,7 +68,7 @@ void fill_flat_top_triangle(int x0, int y0, int x1, int y1, int x2, int y2, uint
 //				             \_\
 //				                \
 // 			                 (x2,y2)
-//
+*/
 void draw_filled_triangle(int x0, int y0, int x1, int y1, int x2, int y2, uint32_t color) {
 	// We need to sort the vertices by y-coordinate ascending (y0 < y1 < y2)
 	if (y0 > y1) {

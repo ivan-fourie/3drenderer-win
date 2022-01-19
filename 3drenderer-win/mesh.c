@@ -1,44 +1,46 @@
 #include <stdio.h>
+#include <string.h>
 #include "array.h"
 #include "mesh.h"
-
 
 mesh_t mesh = {
     .vertices = NULL,
     .faces = NULL,
-    .rotation = { 0, 0, 0}
+    .rotation = { 0, 0, 0 },
+    .scale = { 1.0, 1.0, 1.0 },
+    .translation = { 0, 0, 0}
 };
 
 vec3_t cube_vertices[M_CUBE_VERTICES] = {
-    { .x = -1, .y = -1, .z = -1 }, // 1
-    { .x = -1, .y =  1, .z = -1 }, // 2
-    { .x =  1, .y =  1, .z = -1 }, // 3
-    { .x =  1, .y = -1, .z = -1 }, // 4
-    { .x =  1, .y =  1, .z =  1 }, // 5
-    { .x =  1, .y = -1, .z =  1 }, // 6
-    { .x = -1, .y =  1, .z =  1 }, // 7
-    { .x = -1, .y = -1, .z =  1 }  // 8
+    {.x = -1, .y = -1, .z = -1 }, // 1
+    {.x = -1, .y = 1, .z = -1 }, // 2
+    {.x = 1, .y = 1, .z = -1 }, // 3
+    {.x = 1, .y = -1, .z = -1 }, // 4
+    {.x = 1, .y = 1, .z = 1 }, // 5
+    {.x = 1, .y = -1, .z = 1 }, // 6
+    {.x = -1, .y = 1, .z = 1 }, // 7
+    {.x = -1, .y = -1, .z = 1 }  // 8
 };
 
 face_t cube_faces[M_CUBE_FACES] = {
     // front
-    { .a = 1, .b = 2, .c = 3 },
-    { .a = 1, .b = 3, .c = 4 },
+    {.a = 1, .b = 2, .c = 3, .color = 0xFFFF0000 },
+    {.a = 1, .b = 3, .c = 4, .color = 0xFFFF0000 },
     // right
-    { .a = 4, .b = 3, .c = 5 },
-    { .a = 4, .b = 5, .c = 6 },
+    {.a = 4, .b = 3, .c = 5, .color = 0xFF00FF00 },
+    {.a = 4, .b = 5, .c = 6, .color = 0xFF00FF00 },
     // back
-    { .a = 6, .b = 5, .c = 7 },
-    { .a = 6, .b = 7, .c = 8 },
+    {.a = 6, .b = 5, .c = 7, .color = 0xFFFF0000 },
+    {.a = 6, .b = 7, .c = 8, .color = 0xFFFF0000 },
     // left
-    { .a = 8, .b = 7, .c = 2 },
-    { .a = 8, .b = 2, .c = 1 },
+    {.a = 8, .b = 7, .c = 2, .color = 0xFFFFFF00 },
+    {.a = 8, .b = 2, .c = 1, .color = 0xFFFFFF00 },
     // top
-    { .a = 2, .b = 7, .c = 5 },
-    { .a = 2, .b = 5, .c = 3 },
+    {.a = 2, .b = 7, .c = 5, .color = 0xFFFF00FF },
+    {.a = 2, .b = 5, .c = 3, .color = 0xFFFF00FF },
     // bottom
-    { .a = 6, .b = 8, .c = 1 },
-    { .a = 6, .b = 1, .c = 4 }
+    {.a = 6, .b = 8, .c = 1, .color = 0xFF00FFFF },
+    {.a = 6, .b = 1, .c = 4, .color = 0xFF00FFFF }
 };
 
 void load_cube_mesh_data(void) {
@@ -56,14 +58,18 @@ void load_cube_mesh_data(void) {
 void load_obj_file_data(char* filename) {
     printf("Loading %s\n", filename);
     FILE* file;
-    
+
     errno_t err;
 
     err = fopen_s(&file, filename, "r");
 
     if (err != 0) {
-        printf("Error: could not open file %s. %s", filename, strerror(err));
-        
+        char errbuff[256];
+
+        strerror_s(errbuff, 100, err);
+
+        printf("Error: could not open file %s. %s", filename, errbuff);
+
         // return -1;
     }
 
@@ -101,6 +107,6 @@ void load_obj_file_data(char* filename) {
         }
     }
 
-    // close the file
-    fclose(file);
+    if (err == 0 ) // close the file
+        fclose(file);
 }

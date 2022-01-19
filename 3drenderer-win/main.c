@@ -6,6 +6,7 @@
 #include "display.h"
 #include "vector.h"
 #include "mesh.h"
+#include "matrix.h"
 
 //
 // Array of triangles that should be rendered frame by frame
@@ -29,9 +30,9 @@ void setup(void) {
     // Initialize render mode and triangle culling method
     render_method = RENDER_WIRE;
     cull_method = CULL_BACKFACE;
-    
+
     // Allocate the required memory in bytes for the color buffer
-    color_buffer = (uint32_t*) malloc(sizeof(uint32_t) * window_width * window_height);
+    color_buffer = (uint32_t*)malloc(sizeof(uint32_t) * window_width * window_height);
 
     // Creating a SDL texture that is used to display the color buffer
     color_buffer_texture = SDL_CreateTexture(
@@ -44,7 +45,7 @@ void setup(void) {
 
     // Loads the cube values in the mesh data structure
     // load_cube_mesh_data();
-    load_obj_file_data("./assets/cube.obj");
+    load_obj_file_data("./assets/f223.obj");
 }
 
 //
@@ -55,47 +56,48 @@ void process_input(void) {
     SDL_PollEvent(&event);
 
     switch (event.type) {
-        case SDL_QUIT: 
+    case SDL_QUIT:
+        is_running = false;
+        break;
+    case SDL_KEYDOWN:
+        // Handle key strokes
+        switch (event.key.keysym.sym) {
+        case SDLK_ESCAPE:
             is_running = false;
             break;
-        case SDL_KEYDOWN:
-            // Handle key strokes
-            switch (event.key.keysym.sym) {
-                case SDLK_ESCAPE:
-                    is_running = false;
-                    break;
-                case SDLK_1:
-                    // Display the wireframe and a small red dot for each triangle vertex
-                    printf("Mode: Show the wireframe and a small red dot for each triangle vertex.\n");
-                    render_method = RENDER_WIRE_VERTEX;
-                    break;
-                case SDLK_2:
-                    // Display only the wireframe lines
-                    printf("Mode: Show only the wireframe lines.\n");
-                    render_method = RENDER_WIRE;
-                    break;
-                case SDLK_3:
-                    // Display filled triangles with a solid color
-                    printf("Mode: Show filled triangles with a solid color.\n");
-                    render_method = RENDER_FILL_TRIANGLE;
-                    break;
-                case SDLK_4:
-                    // Display both filled triangles and wireframe lines
-                    printf("Mode: Show both filled triangles and wireframe lines.\n");
-                    render_method = RENDER_FILL_TRIANGLE_WIRE;
-                    break;
-                case SDLK_c:
-                    // Toggle back-face culling
-                    if (cull_method == CULL_BACKFACE) {
-                        cull_method = CULL_NONE;
-                    } else {
-                        cull_method = CULL_BACKFACE;
-                    }
-                    printf("Mode: Back-face culling %s.\n", cull_method == CULL_BACKFACE ? "on" : "off");
-                    
-                    break;
-            }
+        case SDLK_1:
+            // Display the wireframe and a small red dot for each triangle vertex
+            printf("Mode: Show the wireframe and a small red dot for each triangle vertex.\n");
+            render_method = RENDER_WIRE_VERTEX;
             break;
+        case SDLK_2:
+            // Display only the wireframe lines
+            printf("Mode: Show only the wireframe lines.\n");
+            render_method = RENDER_WIRE;
+            break;
+        case SDLK_3:
+            // Display filled triangles with a solid color
+            printf("Mode: Show filled triangles with a solid color.\n");
+            render_method = RENDER_FILL_TRIANGLE;
+            break;
+        case SDLK_4:
+            // Display both filled triangles and wireframe lines
+            printf("Mode: Show both filled triangles and wireframe lines.\n");
+            render_method = RENDER_FILL_TRIANGLE_WIRE;
+            break;
+        case SDLK_c:
+            // Toggle back-face culling
+            if (cull_method == CULL_BACKFACE) {
+                cull_method = CULL_NONE;
+            }
+            else {
+                cull_method = CULL_BACKFACE;
+            }
+            printf("Mode: Back-face culling %s.\n", cull_method == CULL_BACKFACE ? "on" : "off");
+
+            break;
+        }
+        break;
     }
 }
 
@@ -117,55 +119,77 @@ vec2_t project(vec3_t point) {
 void update(void) {
     // Wait some time until we reacg the target frame time in milliseconds
     int time_to_wait = FRAME_TARGET_TIME - (SDL_GetTicks() - previous_frame_time);
-    
+
     // Only delay execution if we are running to fast
     if (time_to_wait > 0 && time_to_wait <= FRAME_TARGET_TIME) {
         SDL_Delay(time_to_wait);
     }
-    
+
     previous_frame_time = SDL_GetTicks();
 
     // Initialise array of triangles to render
     triangles_to_render = NULL;
-    
+
+
+    // Change the mesh scale, rotation & translation values per animation frame
     mesh.rotation.x += 0.01;
     mesh.rotation.y += 0.01;
     mesh.rotation.z += 0.01;
-    
+    mesh.scale.x += 0.002;
+    mesh.scale.y += 0.001;
+    mesh.translation.x += 0.01;
+    mesh.translation.z = 5.0;
+
+    // Create a scale matrix, rotation and translation that will be used to multiply the mesh vertices 
+    mat4_t scale_matrix = mat4_make_scale(mesh.scale.x, mesh.scale.y, mesh.scale.z);
+    mat4_t rotation_matrix_x = mat4_make_rotation_x(mesh.rotation.x);
+    mat4_t rotation_matrix_y = mat4_make_rotation_y(mesh.rotation.y);
+    mat4_t rotation_matrix_z = mat4_make_rotation_z(mesh.rotation.z);
+    mat4_t translation_matrix = mat4_make_translation(mesh.translation.x, mesh.translation.y, mesh.translation.z);
+
     // Loop all triangle faces of our mesh
     int num_faces = array_length(mesh.faces);
 
     for (int i = 0; i < num_faces; i++) {
         face_t mesh_face = mesh.faces[i];
-        
+
         vec3_t face_vertices[3];
         face_vertices[0] = mesh.vertices[mesh_face.a - 1];
         face_vertices[1] = mesh.vertices[mesh_face.b - 1];
         face_vertices[2] = mesh.vertices[mesh_face.c - 1];
 
-        vec3_t transformed_vertices[3];
+        vec4_t transformed_vertices[3];
 
         // Loop all three vertices of this current face and apply transformations
         for (int j = 0; j < 3; j++) {
-            vec3_t transformed_vertex = face_vertices[j];
+            vec4_t transformed_vertex = vec4_from_vec3(face_vertices[j]);
 
-            transformed_vertex = vec3_rotate_x(transformed_vertex, mesh.rotation.x);
-            transformed_vertex = vec3_rotate_y(transformed_vertex, mesh.rotation.y);
-            transformed_vertex = vec3_rotate_z(transformed_vertex, mesh.rotation.z);
+            // Create a World Matrix cominging scale, rptatopm amd translation matrices
+            mat4_t world_matrix = mat4_identity(); // Start with the eye/identity matix
+            // Order matters: First scale, then rotate, then translate. [T]*[R]*[S]*v
 
-            // Translate the vertex away from the camera in z
-            transformed_vertex.z += 5;
+            // #1 Scale
+            world_matrix = mat4_mul_mat4(scale_matrix, world_matrix);
+            // #2 Rotate
+            world_matrix = mat4_mul_mat4(rotation_matrix_x, world_matrix);
+            world_matrix = mat4_mul_mat4(rotation_matrix_y, world_matrix);
+            world_matrix = mat4_mul_mat4(rotation_matrix_z, world_matrix);
+            // #3 Translate
+            world_matrix = mat4_mul_mat4(translation_matrix, world_matrix);
+
+            // Multiply the wolrd matrix by the original vector
+            transformed_vertex = mat4_mul_vec4(world_matrix, transformed_vertex);
 
             // Save transformed vertex in the array of transformed vertices
             transformed_vertices[j] = transformed_vertex;
         }
-        
+
         // Backface culling test to see if the current face should be projected
         if (cull_method == CULL_BACKFACE) {
             // Check backface culling
-            vec3_t vector_a = transformed_vertices[0]; /*   A   */
-            vec3_t vector_b = transformed_vertices[1]; /*  / \  */
-            vec3_t vector_c = transformed_vertices[2]; /* C---B */
+            vec3_t vector_a = vec3_from_vec4(transformed_vertices[0]); /*   A   */
+            vec3_t vector_b = vec3_from_vec4(transformed_vertices[1]); /*  / \  */
+            vec3_t vector_c = vec3_from_vec4(transformed_vertices[2]); /* C---B */
 
             // Get the vector subtraction (B-A) and (C-A)
             vec3_t vector_ba = vec3_sub(vector_b, vector_a);
@@ -192,24 +216,54 @@ void update(void) {
                 continue;
         }
 
-        triangle_t projected_triangle;
+        vec2_t projected_points[3];
 
         // Loop all three vertices to perform the projection
         for (int j = 0; j < 3; j++) {
             // Project the current vertex
-            vec2_t projected_point = project(transformed_vertices[j]);
+            projected_points[j] = project(vec3_from_vec4(transformed_vertices[j]));
 
             // Scale and translate the projected point to the middle of the screen
-            projected_point.x += (window_width / 2);
-            projected_point.y += (window_height / 2);
+            projected_points[j].x += (window_width / 2);
+            projected_points[j].y += (window_height / 2);
 
-            projected_triangle.points[j] = projected_point;
         }
+
+        // Calculate the average depth for each face based on the vertices after transformation
+        float avg_depth = (transformed_vertices[0].z + transformed_vertices[1].z + transformed_vertices[2].z) / 3.0;
+
+        triangle_t projected_triangle = {
+            .points = {
+                { projected_points[0].x, projected_points[0].y },
+                { projected_points[1].x, projected_points[1].y },
+                { projected_points[2].x, projected_points[2].y }
+            },
+            .color = mesh_face.color,
+            .avg_depth = avg_depth
+        };
 
         // Save the projected triangle in the array of triangles to render
         array_push(triangles_to_render, projected_triangle);
     }
+
+    // Sort the triangles to render by their avg_depth in reverse order using painter's algorithm and bubblesort
+    int num_triangles = array_length(triangles_to_render);
+
+    triangle_t tmp_triangle;
+    for (int i = 0; i < num_triangles; i++) {   // loop num_triangles times - 1 per element
+        for (int j = 0; j < num_triangles - i - 1; j++) { // last i elements are sorted already
+            if (triangles_to_render[j].avg_depth <= triangles_to_render[j + 1].avg_depth) {
+                // Swop triangle positions
+                tmp_triangle = triangles_to_render[j];
+                triangles_to_render[j] = triangles_to_render[j + 1];
+                triangles_to_render[j + 1] = tmp_triangle;
+            }
+        }
+    }
+
 }
+
+
 
 //
 // Render function to draw objects on the display 
@@ -224,9 +278,9 @@ void render(void) {
     int num_triangles = array_length(triangles_to_render);
     for (int i = 0; i < num_triangles; i++) {
         triangle_t triangle = triangles_to_render[i];
-        
+
         if (render_method == RENDER_WIRE_VERTEX) {
-        // // Draw vertex points
+            // // Draw vertex points
             draw_rect(triangle.points[0].x - 3, triangle.points[0].y - 3, 6, 6, 0xFFFF0000); // vertex A
             draw_rect(triangle.points[1].x - 3, triangle.points[1].y - 3, 6, 6, 0xFFFF0000); // vertex B
             draw_rect(triangle.points[2].x - 3, triangle.points[2].y - 3, 6, 6, 0xFFFF0000); // vertex C
@@ -238,11 +292,11 @@ void render(void) {
                 triangle.points[0].x, triangle.points[0].y, // vertex A
                 triangle.points[1].x, triangle.points[1].y, // vertex B
                 triangle.points[2].x, triangle.points[2].y, // vertex C
-                0xFF555555
+                triangle.color
             );
         }
 
-        if (render_method == RENDER_WIRE || render_method == RENDER_WIRE_VERTEX 
+        if (render_method == RENDER_WIRE || render_method == RENDER_WIRE_VERTEX
             || render_method == RENDER_FILL_TRIANGLE_WIRE) {
             // Draw unfilled triangle
             draw_triangle(
@@ -254,7 +308,7 @@ void render(void) {
         }
 
     }
-    
+
     // Clear the array of triangles to render
     array_free(triangles_to_render);
 
@@ -277,7 +331,7 @@ void free_resources(void) {
 // Main function
 //
 int main(int argc, char* args[]) {
-    
+
     // Create a SDL window
     is_running = initialize_window();
 

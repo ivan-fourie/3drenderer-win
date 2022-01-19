@@ -47,7 +47,7 @@ float vec2_dot(vec2_t a, vec2_t b) {
 	return (a.x * b.x) + (a.y * b.y);
 }
 
-// Normalize a 2D vector
+// Normalize a 2D vector (by reference)
 void vec2_normalize(vec2_t* v) {
 	float length = sqrt(v->x * v->x + v->y * v->y);
 	v->x /= length;
@@ -115,14 +115,13 @@ float vec3_dot(vec3_t a, vec3_t b) {
 	return (a.x * b.x) + (a.y * b.y) + (a.z * b.z);
 }
 
-// Normalize a 3D vector
+// Normalize a 3D vector (by reference)
 void vec3_normalize(vec3_t* v) {
 	float length = sqrt(v->x * v->x + v->y * v->y + v->z * v->z);
 	v->x /= length;
 	v->y /= length;
 	v->z /= length;
 }
-
 
 // Rotate around x rotation based on the angle given using sine and cosine angle addition formulas to calculate rotation
 vec3_t vec3_rotate_x(vec3_t v, float angle) {
@@ -154,4 +153,18 @@ vec3_t vec3_rotate_z(vec3_t v, float angle) {
 
 	};
 	return rotated_vector;
+}
+
+//
+// Implementations of Vector conversion functions
+//
+
+vec4_t vec4_from_vec3(vec3_t v) {
+	vec4_t result = { v.x, v.y, v.z, 1 };
+	return result;
+}
+
+vec3_t vec3_from_vec4(vec4_t v) {
+	vec3_t result = { v.x, v.y, v.z };
+	return result;
 }
