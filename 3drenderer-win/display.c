@@ -2,8 +2,8 @@
 
 SDL_Window* window = NULL;
 SDL_Renderer* renderer = NULL;
-int window_width = 800;
-int window_height = 600;
+int window_width = 1920;
+int window_height = 1080;
 
 // Delcare a pointer to an array of uint32 elments
 uint32_t* color_buffer = NULL;
@@ -31,7 +31,7 @@ bool initialize_window(void) {
             SDL_WINDOWPOS_CENTERED,
             window_width,
             window_height,
-            SDL_WINDOW_BORDERLESS
+            SDL_WINDOW_SHOWN
     );
     
     if (!window) {
@@ -46,8 +46,7 @@ bool initialize_window(void) {
         return false;
     }
 
-    // Crashes on WSL :(
-    // SDL_SetWindowFullscreen(window, SDL_WINDOW_FULLSCREEN);
+    SDL_SetWindowFullscreen(window, SDL_WINDOW_FULLSCREEN);
 
     return true;
 }
@@ -66,7 +65,7 @@ void draw_grid(void) {
 }
 
 void draw_pixel(int x, int y, uint32_t color) {
-    if (x >= 0 && x < window_width && y >= 0 && y < window_height) {
+    if (x < window_width && y < window_height) {
         color_buffer[(window_width * y) + x] = color;
     }
 }
@@ -93,12 +92,6 @@ void draw_line(int x0, int y0, int x1, int y1, uint32_t color) {
         current_x += x_inc;
         current_y += y_inc;
     }
-}
-
-void draw_triangle(int x0, int y0, int x1, int y1, int x2, int y2, uint32_t color) {
-    draw_line(x0, y0, x1, y1, color);
-    draw_line(x1, y1, x2, y2, color);
-    draw_line(x2, y2, x0, y0, color);
 }
 
 void draw_rect(int x, int y, int width, int height, uint32_t color) {
@@ -130,7 +123,7 @@ void clear_color_buffer(uint32_t color) {
     }    
 }
 
-void destroy_window(void) {   
+void destroy_window(void) {
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
     SDL_Quit();

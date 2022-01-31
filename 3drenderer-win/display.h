@@ -18,15 +18,17 @@ enum render_method {
     RENDER_WIRE,
     RENDER_WIRE_VERTEX,
     RENDER_FILL_TRIANGLE,
-    RENDER_FILL_TRIANGLE_WIRE
+    RENDER_FILL_TRIANGLE_WIRE,
+    RENDER_TEXTURED,
+    RENDER_TEXTURE_WIRE
 } render_method;
 
-SDL_Window* window;
-SDL_Renderer* renderer;
-uint32_t* color_buffer;
-SDL_Texture* color_buffer_texture;
-int window_width;
-int window_height;
+extern SDL_Window* window;
+extern SDL_Renderer* renderer;
+extern uint32_t* color_buffer;
+extern SDL_Texture* color_buffer_texture;
+extern int window_width;
+extern int window_height;
 
 bool initialize_window(void);
 void draw_grid(void);

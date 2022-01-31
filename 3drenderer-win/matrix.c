@@ -3,23 +3,23 @@
 
 // Generates a 4x4 identity matrix
 mat4_t mat4_identity(void) {
-    /*
+    /*  
         | 1 0 0 0 |
         | 0 1 0 0 |
         | 0 0 1 0 |
-        | 0 0 0 1 |
+        | 0 0 0 1 | 
     */
-    mat4_t m = { {
+    mat4_t m = {{
         { 1, 0, 0, 0 },
         { 0, 1, 0, 0 },
         { 0, 0, 1, 0 },
         { 0, 0, 0, 1 }
-    } };
+    }};
     return m;
 }
 
 mat4_t mat4_make_scale(float sx, float sy, float sz) {
-    /*
+    /*  
         | sx   0   0   0 |
         |  0  sy   0   0 |
         |  0   0  sz   0 |
@@ -33,7 +33,7 @@ mat4_t mat4_make_scale(float sx, float sy, float sz) {
 }
 
 mat4_t mat4_make_translation(float tx, float ty, float tz) {
-    /*
+    /*  
         |  1   0   0  tx |
         |  0   1   0  ty |
         |  0   0   1  tz |
@@ -51,7 +51,7 @@ mat4_t mat4_make_translation(float tx, float ty, float tz) {
 mat4_t mat4_make_rotation_x(float angle) {
     float c = cos(angle);
     float s = sin(angle);
-    /*
+    /*  
         |  1  0  0  0 |
         |  0  c -s  0 |
         |  0  s  c  0 |
@@ -68,7 +68,7 @@ mat4_t mat4_make_rotation_x(float angle) {
 mat4_t mat4_make_rotation_y(float angle) {
     float c = cos(angle);
     float s = sin(angle);
-    /*
+    /*  
         |  c  0  s  0 |
         |  0  1  0  0 |
         | -s  0  c  0 |
@@ -84,10 +84,10 @@ mat4_t mat4_make_rotation_y(float angle) {
 }
 
 
-mat4_t mat4_make_rotation_z(float angle) {
+mat4_t mat4_make_rotation_z(float angle)  {
     float c = cos(angle);
     float s = sin(angle);
-    /*
+    /*  
         |  c -s  0  0 |
         |  s  c  0  0 |
         |  0  s  1  0 |
@@ -102,7 +102,7 @@ mat4_t mat4_make_rotation_z(float angle) {
 }
 
 vec4_t mat4_mul_vec4(mat4_t m, vec4_t v) {
-    /*
+    /*  
         | m11   m12   m13   m14 |     |x  |
         | m21   m22   m23   m24 |  *  |y  |
         | m31   m32   m33   m34 |     |z  |
@@ -117,12 +117,12 @@ vec4_t mat4_mul_vec4(mat4_t m, vec4_t v) {
 }
 
 mat4_t mat4_mul_mat4(mat4_t a, mat4_t b) {
-    /*
-         | a11   a12   a13   a14 |     | b11   b12   b13   b14 |
-         | a21   a22   a23   a24 |  *  | b21   b22   b23   b24 |
-         | a31   a32   a33   a34 |     | b31   b32   b33   b34 |
-         | a41   a42   a43   a44 |     | b41   b42   b43   b44 |
-     */
+   /*  
+        | a11   a12   a13   a14 |     | b11   b12   b13   b14 |
+        | a21   a22   a23   a24 |  *  | b21   b22   b23   b24 |
+        | a31   a32   a33   a34 |     | b31   b32   b33   b34 |
+        | a41   a42   a43   a44 |     | b41   b42   b43   b44 |
+    */
     mat4_t m;
     for (int i = 0; i < 4; i++) {        // rows
         for (int j = 0; j < 4; j++) {    // columns
@@ -139,7 +139,7 @@ mat4_t mat4_make_perspective(float fov, float aspect, float znear, float zfar) {
         |                  0             0     zf/(zf-zn)  (-zf*zn)/(zf-zn) |
         |                  0             0              1                 0 |
     */
-    mat4_t m = { {{ 0 }} };
+    mat4_t m = {{{ 0 }}};
     m.m[0][0] = aspect * (1 / tan(fov / 2));
     m.m[1][1] = 1 / tan(fov / 2);
     m.m[2][2] = zfar / (zfar - znear);
