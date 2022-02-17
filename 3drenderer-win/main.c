@@ -24,7 +24,8 @@
 //
 bool is_running = false;
 int previous_frame_time = 0;
-bool is_autorotate = true;
+float delta_time = 0;
+bool is_autorotate = false;
 float rotation_rate = 0.05;
 float rotation_increment = 0.01;
 
@@ -141,20 +142,20 @@ void process_input(void) {
                     printf("Mode: Automatic rotation is %s.\n", is_autorotate ? "on" : "off");
                     break;
                 case SDLK_UP:
-                    // Rotate up
-                    mesh.rotation.x -= rotation_rate;
+                    // Move camera up
+                    camera.position.y += 3.0 * delta_time;
                     break;
                 case SDLK_DOWN:
-                    // Rotate down
-                    mesh.rotation.x += rotation_rate;
+                    // Move camera down
+                    camera.position.y -= 3.0 * delta_time;
                     break;
                 case SDLK_LEFT:
                     // Rotate left
-                    mesh.rotation.y -= rotation_rate;
+                    mesh.rotation.y -= rotation_rate * delta_time;
                     break;
                 case SDLK_RIGHT:
                     // Rotate right
-                    mesh.rotation.y += rotation_rate;
+                    mesh.rotation.y += rotation_rate * delta_time;
                     break;
                 case SDLK_PERIOD:
                     // Increase rotation rate
@@ -166,6 +167,26 @@ void process_input(void) {
                     rotation_rate -= rotation_increment;
                     printf("Rotation decreased to %f.\n", rotation_rate);
                     break;
+                case SDLK_w:
+                    // Move camera forward
+                    camera.forward_velocity = vec3_mul(camera.direction, 5.0 * delta_time);
+                    camera.position = vec3_add(camera.position, camera.forward_velocity);
+                    break;
+                case SDLK_s:
+                    // Move camera backward
+                    camera.forward_velocity = vec3_mul(camera.direction, 5.0 * delta_time);
+                    camera.position = vec3_sub(camera.position, camera.forward_velocity);
+                    break;
+                case SDLK_a:
+                    // Yaw camera left
+                    camera.yaw += 1.0 * delta_time;
+                    break;
+                case SDLK_d:
+                    // Yaw camera right
+                    camera.yaw -= 1.0 * delta_time;
+                    break;
+
+
             }
             break;
     }
@@ -183,6 +204,9 @@ void update(void) {
         SDL_Delay(time_to_wait);
     }
     
+    // Get a delta time factor converted to seconds to be used to update objects
+    delta_time = (SDL_GetTicks() - previous_frame_time) / 1000.00;
+
     previous_frame_time = SDL_GetTicks();
 
     // Initialise the counter of triangles to render for the current frame
@@ -191,20 +215,24 @@ void update(void) {
 
     // Change the mesh scale, rotation & translation values per animation frame
     if (is_autorotate) {
-        //mesh.rotation.x -= rotation_rate;
-        //mesh.rotation.y += rotation_rate;
-        //mesh.rotation.z += rotation_rate;
+        mesh.rotation.x -= rotation_rate * delta_time;
+        mesh.rotation.y += rotation_rate * delta_time;
+        mesh.rotation.z += rotation_rate * delta_time;
     }
     mesh.translation.z = 4.0;
 
-
-    //  Change camera position per animation frame
-    camera.position.x += 0.008;
-    camera.position.y += 0.008;
-
-    // Create the view matrix looking at hardcoded traget point
-    vec3_t target = { 0, 0, 4.0 };
+    
     vec3_t up_direction = { 0, 1, 0 };
+    
+    // Initialize the target looking at the positive z-axis
+    vec3_t target = { 0, 0, 1 };
+    mat4_t camera_yaw_rotation = mat4_make_rotation_y(camera.yaw);
+    camera.direction = vec3_from_vec4(mat4_mul_vec4(camera_yaw_rotation, vec4_from_vec3(target)));
+
+    // Offset the camera position in the direction where the camera is pointing at
+    target = vec3_add(camera.position, camera.direction);
+
+    // Create the view matrix   
     view_matrix = mat4_look_at(camera.position, target, up_direction);
 
     // Create a scale matrix, rotation and translation that will be used to multiply the mesh vertices 
